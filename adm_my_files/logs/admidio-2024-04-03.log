@@ -1,0 +1,2 @@
+[2024-04-03 22:58:34.741289] Admidio.WARNING: Database password is weak! (zxcvbn lib) {"score":2} {"file":"/var/www/html/admidio/adm_program/installation/install_steps/create_organization.php","line":123,"class":null,"callType":null,"function":"require_once"}
+[2024-04-03 22:58:34.828420] Admidio.WARNING: PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'admidio.adm2_organizations' doesn't exist  {"file":"/var/www/html/admidio/adm_program/system/classes/Database.php","line":801,"class":"Database","callType":"->","function":"queryPrepared"}
