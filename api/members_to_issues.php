@@ -23,7 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if($action == "all_active_members"){
         //
     }
-    $sql = 'SELECT ud3.`usd_value` AS member_count,ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email,m.* 
+    if(empty($eventId)){
+        $eventId = 1;
+    }
+    $sql = 'SELECT ud3.`usd_value` AS member_count,ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email,m.`mem_id`
     FROM adm2_members m 
     LEFT OUTER JOIN `adm2_user_data` ud ON ud.`usd_usr_id` = m.`mem_id` AND ud.`usd_usf_id` = 11 
     LEFT OUTER JOIN `adm2_user_data` ud2 ON ud2.`usd_usr_id` = m.`mem_id` AND ud2.`usd_usf_id` = 24
@@ -36,11 +39,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $member_count = $row["member_count"];
         $member_status = $row["member_status"];
         $member_email = $row["member_email"];
+        $member_id = $row["mem_id"];
+
         $i = 0;
         while($i < $member_count){
-            // issue code
+            // issue code             
+            $uniqueId = uniqid();
+            $insetSQL = "INSERT INTO bcaa_issues(iss_id,event_id,member_id,iss_token,`status`) VALUES (NULL,".$eventId.",".$member_id.",'".$uniqueId."','P')";
+            $gDb->queryPrepared($insetSQL);            
 
-            
+            $i++;
         }
 
     }
