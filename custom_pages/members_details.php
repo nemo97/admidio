@@ -3,7 +3,7 @@
     include __DIR__ .'/../phpqrcode/qrlib.php'; 
     require_once(__DIR__ . '/../adm_program/system/common.php');    
 
-    $text = "GEEKS FOR GEEKS"; 
+    
     $t = 24;
     if($t < 20){
         QRcode::png($text);
@@ -34,23 +34,25 @@
         }else{
             // active
 
-            $sql = 'SELECT ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email, b.`iss_token` AS iss_token,`status`,`redeem_date`,`redeem_user`
+            $sql = 'SELECT m.`mem_id` as member_id ,ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email, b.`iss_token` AS iss_token,`status`,`redeem_date`,`redeem_user`
             FROM adm2_members m LEFT OUTER JOIN bcaa_issues b ON m.`mem_id` = b.`member_id` 
             LEFT OUTER JOIN `adm2_user_data` ud ON ud.`usd_usr_id` = m.`mem_id` AND ud.`usd_usf_id` = 11 
             LEFT OUTER JOIN `adm2_user_data` ud2 ON ud2.`usd_usr_id` = m.`mem_id` AND ud2.`usd_usf_id` = 24
-            WHERE ud.`usd_value` = ?';
+            WHERE ud.`usd_value` = ? AND b.iss_token IS NOT NULL';
 
             $datesStatement1 = $gDb->queryPrepared($sql,$queryParams);
             while ($row1 = $datesStatement1->fetch()) {
                 $iss_token = $row1['iss_token'];
+                $member_id = $row1['member_id'];
                 echo  "Email ".$email;   
                 // QRcode::png($text);
 
+                $text = $member_id.":".$iss_token; 
                 // $path variable store the location where to  
                 // store image and $file creates directory name 
                 // of the QR code file by using 'uniqid' 
                 // uniqid creates unique id based on microtime 
-                $unqId = uniqid().".png";              
+                $unqId = $member_id."_".$iss_token.".png";              
                 $path = __DIR__ .'/images/'; 
                 $file = $path.$unqId; 
                 
@@ -58,7 +60,7 @@
                 $ecc = 'L'; 
                 $pixel_Size = 10; 
                 $frame_Size = 10; 
-                echo "File name ".$file;
+                echo " File name ".$file;
                 // Generates QR Code and Stores it in directory given 
                 QRcode::png($text, $file, $ecc, $pixel_Size, $frame_Size); 
                 
