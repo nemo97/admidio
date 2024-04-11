@@ -13,11 +13,11 @@
 $gDbType = 'mysql';
 
 // Access to the database of the SQL-Server
-$g_adm_srv  = '192.168.4.79';     // Host
-$g_adm_port = 3310;     // Port
+$g_adm_srv  = 'localhost';     // Host
+$g_adm_port = 3306;     // Port
 $g_adm_db   = 'admidio';     // Database-Name
-$g_adm_usr  = 'admidio'; // Username
-$g_adm_pw   = 'admidio'; // Password
+$g_adm_usr  = 'admin'; // Username
+$g_adm_pw   = 'Bcaa123$'; // Password
 
 // Table prefix for Admidio-Tables in database
 // Example: 'adm'
@@ -25,7 +25,7 @@ $g_tbl_praefix = 'adm2';
 
 // URL to this Admidio installation
 // Example: 'https://www.admidio.org/example'
-$g_root_path = 'http://localhost:9000/admidio';
+$g_root_path = 'https://bcaa.subhas.dev';
 
 // The name of the timezone in which your organization is located.
 // This must be one of the strings that are defined here https://www.php.net/manual/en/timezones.php
