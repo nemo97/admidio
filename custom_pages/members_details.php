@@ -28,8 +28,8 @@
     if ($row = $datesStatement->fetch()) {
         $MYDATA[] =  $row ;
         $member_status = $row['member_status'];
-        if($member_status == 1){
-            // 0 - active , 1 - inative
+        if($member_status == 0){
+            // 0 - not set yet , 1 - inative
             echo "Member is not active for this email.<br> Please contact";
         }else{
             // active
