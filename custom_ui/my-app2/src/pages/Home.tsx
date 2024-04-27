@@ -5,7 +5,8 @@ import './home.css'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { Table as BTable } from 'react-bootstrap';
+import { Alert, Table as BTable, Card, CardBody, Table } from 'react-bootstrap';
+
 
 import {
    Column,
@@ -23,7 +24,10 @@ import {
    Row
  } from '@tanstack/react-table'
  
- import { makeData, Person } from './makeData'
+ //import { makeData, Person } from './makeData'
+ import { MemberInfo,getUserData,getUserTokenData,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
+import { Button } from 'react-bootstrap';
+
  
  declare module '@tanstack/react-table' {
    //allows us to define custom properties for our columns
@@ -33,11 +37,175 @@ import {
  }
 
 
- const renderSubComponent = ({ row }: { row: Row<Person> }) => {
+
+ const TokenComponent = ({ row }: { row: Row<MemberInfo> }) => {
+  const [data, setData] = React.useState<MemberTokenInfo[]>([]);
+  const [message, setMessage] = React.useState<String>('');
+  const [errmsg, setErrmsg] = React.useState<String>('');
+
+  React.useEffect(()=>{
+    refreshData();
+  },[]);
+  
+  const refreshData = () => {
+    getUserTokenData(row.original.member_id).then((data : JsonResponseUserToken)=>{
+      //console.log("data",data);
+      if(data.result){
+        setData(data.result);
+      }
+      
+    });
+  }
+  const issueMoreToken = (member_id : number) => {
+    issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
+      if(data.error==='Y'){        
+        
+      }else{
+        setMessage("Succesfully Issued.");
+        refreshData();
+      }
+    });
+  }
+  const sendEmail = (member_id : number) => {
+    // issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
+    //   if(data.error==='Y'){        
+        
+    //   }else{
+    //     setMessage("Succesfully Issued.");
+    //     refreshData();
+    //   }
+    // });
+  }
+  const openPDF = (member_id : number,member_email: string) => {
+    // issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
+    //   if(data.error==='Y'){        
+        
+    //   }else{
+    //     setMessage("Succesfully Issued.");
+    //     refreshData();
+    //   }
+    // });
+    window.open("https://bcaa.subhas.dev/custom_pages/members_details.php?email="+member_email,"_balnk");
+  }
+  const deleteToken = (member_id : number,iss_id: number) => {
+    deleteUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
+      if(data.error==='Y'){        
+        
+      }else{
+        setMessage("Succesfully Deleted.");
+        refreshData();
+      }
+    });
+  }
+  const undoToken = (member_id : number,iss_id: number) => {
+    undoUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
+      if(data.error==='Y'){        
+        
+      }else{
+        setMessage("Succesfully Undo.");
+        refreshData();
+      }
+    });
+  }
+  const columns = React.useMemo<ColumnDef<MemberTokenInfo, any>[]>(
+    () => [
+      {
+        accessorKey: 'iss_id',      
+        cell: info => info.getValue(),       
+        header: () => <span>ID#</span>,
+      },
+      {        
+        accessorKey: 'token_text',
+        cell: info => info.getValue(),
+        header: () => <span>Token</span>,
+      }, 
+      {
+        accessorKey: 'token_status',
+        header: () => <span>Token Status #</span>     
+      },
+      {
+        accessorKey: 'token_status_desc',
+        header: 'Status Desc',        
+      },  
+      {
+        accessorKey: 'token_redeem_date',
+        header: 'Redeem Date',        
+      },     
+    ],
+    []
+  );
+  const table = useReactTable({data,
+    columns,
+    getCoreRowModel: getCoreRowModel()});
+
    return (
-     <pre style={{ fontSize: '10px' }}>
-       <code>{JSON.stringify(row.original, null, 2)}</code>
-     </pre>
+    <div className="container">   
+      {message && <Alert variant='success'>{message}</Alert> } 
+      {errmsg && <Alert variant='warning'>{errmsg}</Alert> } 
+      <div></div>
+      <BTable striped bordered hover responsive size="sm">
+       <thead>
+         {table.getHeaderGroups().map(headerGroup => (
+           <tr key={headerGroup.id}>
+             {headerGroup.headers.map(header => {
+               return (
+                 <th key={header.id} colSpan={header.colSpan}>
+                   {header.isPlaceholder ? null : (
+                     <>
+                       <div>
+                         {flexRender(
+                           header.column.columnDef.header,
+                           header.getContext()
+                         )}                         
+                       </div>                       
+                     </>
+                   )}
+                 </th>
+               )
+             })}
+           </tr>
+         ))}
+       </thead>
+       <tbody>
+         {table.getRowModel().rows.map(row => {
+           return (
+            <React.Fragment key={row.id}>
+             <tr>
+              <td>
+              {row.original.token_status === 'R' &&  <Button variant="danger" onClick={()=> undoToken(row.original.member_id,row.original.iss_id) }>Undo Redeem</Button>} {' '} 
+              <Button variant="warning" onClick={()=> deleteToken(row.original.member_id,row.original.iss_id) }>Remove</Button></td>
+               {row.getVisibleCells().map(cell => {
+                 return (
+                   <td key={cell.id}>
+                     {flexRender(
+                       cell.column.columnDef.cell,
+                       cell.getContext()
+                     )}
+                   </td>
+                 )
+               })}               
+             </tr>            
+             </React.Fragment>
+           )
+         })}
+       </tbody>
+     </BTable>
+      <div>
+        <Button variant="primary" onClick={refreshData}>Refresh</Button>{' '}
+        <Button variant="primary" onClick={()=>issueMoreToken(row.original.member_id)}>Issue 1 Token</Button>{' '}
+        <Button variant="info" onClick={()=>sendEmail(row.original.member_id)}>Send Email to User</Button>{' '}
+        <Button variant="info" onClick={()=>openPDF(row.original.member_id,row.original.member_email)}>Open As PDF</Button>{' '}
+      </div>
+      { /*
+        data.map( t =>{
+          return <Card>
+            <CardBody>
+            <code>{JSON.stringify(t, null, 2)}</code>       
+            </CardBody>
+          </Card>
+        }) */
+      }     
+     </div>
    )
  }
 
@@ -51,10 +219,10 @@ const Home = () => {
     []
   )
 
-  const columns = React.useMemo<ColumnDef<Person, any>[]>(
+  const columns = React.useMemo<ColumnDef<MemberInfo, any>[]>(
     () => [
       {
-        accessorKey: 'firstName',      
+        accessorKey: 'member_name',      
        // cell: info => info.getValue(),
        cell: ({ row, getValue }) => (
          <div
@@ -83,54 +251,41 @@ const Home = () => {
            </div>
          </div>
        ),
-       footer: props => props.column.id
+       header: () => <span>Name</span>,
       },
       {
-        accessorFn: row => row.lastName,
-        id: 'lastName',
+        accessorFn: row => row.member_email,
+        id: 'member_email',
         cell: info => info.getValue(),
-        header: () => <span>Last Name</span>,
+        header: () => <span>Email</span>,
+      },      
+      
+      {
+        accessorKey: 'token_count',
+        header: () => <span>Token Count #</span>     
       },
       {
-        accessorFn: row => `${row.firstName} ${row.lastName}`,
-        id: 'fullName',
-        header: 'Full Name',
-        cell: info => info.getValue(),
-      },
-      {
-        accessorKey: 'age',
-        header: () => 'Age',
-        meta: {
-          filterVariant: 'range',
-        },
-      },
-      {
-        accessorKey: 'visits',
-        header: () => <span>Visits</span>,
-        meta: {
-          filterVariant: 'range',
-        },
-      },
-      {
-        accessorKey: 'status',
+        accessorKey: 'member_status_desc',
         header: 'Status',
         meta: {
           filterVariant: 'select',
         },
-      },
-      {
-        accessorKey: 'progress',
-        header: 'Profile Progress',
-        meta: {
-          filterVariant: 'range',
-        },
-      },
+      },     
     ],
     []
   )
+  const [data, setData] = React.useState<MemberInfo[]>([]);
+  React.useEffect(()=>{
+    getUserData().then((data : JsonResponseUser)=>{
+      //console.log("data",data);
+      if(data.result){
+        setData(data.result);
+      }            
+    });
+  },[]);
 
-  const [data, setData] = React.useState<Person[]>(() => makeData(100,5,4))
-  const refreshData = () => setData(_old => makeData(100,5,3)) //stress test
+  //const [data, setData] = React.useState<Person[]>(() => makeData(100,5,4))
+  const refreshData = () => setData(_old => []); //stress test
   
   //const [expanded, setExpanded] = React.useState<ExpandedState>({})
 
@@ -217,7 +372,7 @@ const Home = () => {
                <tr>
                  {/* 2nd row is a custom 1 cell row */}
                  <td colSpan={row.getVisibleCells().length}>
-                   {renderSubComponent({ row })}
+                   <TokenComponent row={row}/>
                  </td>
                </tr>
              )}
@@ -342,9 +497,7 @@ const Home = () => {
         >
           {/* See faceted column filters example for dynamic select options */}
           <option value="">All</option>
-          <option value="complicated">complicated</option>
-          <option value="relationship">relationship</option>
-          <option value="single">single</option>
+          <option value="1">Active Only</option>          
         </select>
       ) : (
         <DebouncedInput
