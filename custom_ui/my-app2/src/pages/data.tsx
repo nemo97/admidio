@@ -1,7 +1,7 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 
 const client = axios.create({
-  baseURL: 'http://192.168.1.133:9080/',
+  baseURL: 'https://bcaa.subhas.dev/',
 });
 const defaultErrorRes : JsonResponseUserToken = {
     'error':'Y',

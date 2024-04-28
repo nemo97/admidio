@@ -11,10 +11,10 @@ const NavBar = lazy(() => import('./components/NavBar'));
 function App() {
   return (
     <>
-    <BrowserRouter>
+    <BrowserRouter basename="/custom_ui/build">
     <NavBar></NavBar>
     <Suspense fallback={<div className="container">Loading...</div>}>
-      <Routes>
+      <Routes>	    
         <Route path="/" element={<Home />} />       
         <Route path="/about" element={<About />} />
       </Routes>
