@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 				LEFT OUTER JOIN `adm2_user_data` ud2 ON ud2.`usd_usr_id` = m.`mem_id` AND ud2.`usd_usf_id` = 24
 				LEFT OUTER JOIN `adm2_user_data` ud3 ON ud3.`usd_usr_id` = m.`mem_id` AND ud3.`usd_usf_id` = 1
 				LEFT OUTER JOIN `adm2_user_data` ud4 ON ud4.`usd_usr_id` = m.`mem_id` AND ud4.`usd_usf_id` = 2
-				WHERE m.mem_approved IS NULL AND ud2.`usd_value` IS NOT NULL';
+				WHERE ud2.`usd_value` IS NOT NULL';
 		$datesStatement = $gDb->queryPrepared($sql);
 		
 		//$MYDATA = array();
