@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route,BrowserRouter } from 'react-router-dom';
+import { Routes, Route,HashRouter } from 'react-router-dom';
 
 
 
@@ -11,15 +11,15 @@ const NavBar = lazy(() => import('./components/NavBar'));
 function App() {
   return (
     <>
-    <BrowserRouter basename="/custom_ui/build">
+    <HashRouter>
     <NavBar></NavBar>
     <Suspense fallback={<div className="container">Loading...</div>}>
-      <Routes>	    
+      <Routes>        
         <Route path="/" element={<Home />} />       
         <Route path="/about" element={<About />} />
       </Routes>
     </Suspense>
-    </BrowserRouter>
+    </HashRouter>
  </>
 
   );
