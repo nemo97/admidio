@@ -13,13 +13,18 @@ const config: AxiosRequestConfig = {
     },
 };
 export type MemberInfo = {
+    mem_uuid : string,
     member_id : number, 
     member_name : string,  
     member_status: number,
     member_status_desc: string ,
     member_email: string,
-    token_count: number
+    token_count: string,
+    guest_count : number,
+    sent_status: string,
+    sent_date : string
 }
+
 export type MemberTokenInfo = {
     iss_id: number,
     member_id : number, 
@@ -169,4 +174,31 @@ export const issueSingleUserToken  = async (member_id : number) : Promise<JsonRe
       } 
       
       return defaultErrorRes;
+}
+
+export const issueSingleUserSendEmail  = async (member_id : number) : Promise<JsonResponseUserToken> => {
+  try {        
+      const data = {'member_id': member_id, 'action' : 'SEND_SINGLE_EMAIL'};
+      const searchResponse: AxiosResponse<JsonResponseUserToken> = await client.post(`/api/members_to_issues.php`,data, config);
+      console.log(searchResponse.data);
+      //if(searchResponse.data && searchResponse.data["error"] !== "Y" ){
+          // success
+          //const result : MemberInfo[] = searchResponse.result;
+
+      return searchResponse.data; 
+      //}
+      //const foundUsers: MemberInfo[] = searchResponse.data.js;
+  
+      // const username: string = foundUsers[0].login;
+      // const userResponse: AxiosResponse = await client.get(`/users/${username}`, config);
+      // const user: githubUser = userResponse.data;
+      // const followersCount = user.followers;
+  
+      //console.log(`The most followed user on GitHub is "${username}" with ${followersCount} followers.`)
+    } catch(err) {
+      console.log(err);
+      throw err;
+    } 
+    
+    return defaultErrorRes;
 }

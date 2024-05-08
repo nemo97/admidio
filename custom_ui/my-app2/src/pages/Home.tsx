@@ -25,7 +25,7 @@ import {
  } from '@tanstack/react-table'
  
  //import { makeData, Person } from './makeData'
- import { MemberInfo,getUserData,getUserTokenData,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
+ import { MemberInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
 import { Button } from 'react-bootstrap';
 
  
@@ -39,6 +39,7 @@ import { Button } from 'react-bootstrap';
 
 
  const TokenComponent = ({ row }: { row: Row<MemberInfo> }) => {
+
   const [data, setData] = React.useState<MemberTokenInfo[]>([]);
   const [message, setMessage] = React.useState<String>('');
   const [errmsg, setErrmsg] = React.useState<String>('');
@@ -59,7 +60,10 @@ import { Button } from 'react-bootstrap';
   const issueMoreToken = (member_id : number) => {
     issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
       if(data.error==='Y'){        
-        
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
       }else{
         setMessage("Succesfully Issued.");
         refreshData();
@@ -67,16 +71,19 @@ import { Button } from 'react-bootstrap';
     });
   }
   const sendEmail = (member_id : number) => {
-    // issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
-    //   if(data.error==='Y'){        
-        
-    //   }else{
-    //     setMessage("Succesfully Issued.");
-    //     refreshData();
-    //   }
-    // });
+    issueSingleUserSendEmail(member_id).then((data : JsonResponseUserToken) => {
+      if(data.error ==='Y'){      
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
+      }else{
+        setMessage("Succesfully Sent Email.");
+        refreshData();
+      }
+    });
   }
-  const openPDF = (member_id : number,member_email: string) => {
+  const openPDF = (member_id : number,member_email: string,mem_uuid : string) => {
     // issueSingleUserToken(member_id).then((data : JsonResponseUserToken) => {
     //   if(data.error==='Y'){        
         
@@ -85,12 +92,15 @@ import { Button } from 'react-bootstrap';
     //     refreshData();
     //   }
     // });
-    window.open("https://bcaa.subhas.dev/custom_pages/members_details.php?email="+member_email,"_balnk");
+    window.open("https://bcaa.subhas.dev/custom_pages/members_details.php?email="+member_email+"&id="+mem_uuid+"","_balnk");
   }
   const deleteToken = (member_id : number,iss_id: number) => {
     deleteUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
       if(data.error==='Y'){        
-        
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
       }else{
         setMessage("Succesfully Deleted.");
         refreshData();
@@ -100,7 +110,10 @@ import { Button } from 'react-bootstrap';
   const undoToken = (member_id : number,iss_id: number) => {
     undoUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
       if(data.error==='Y'){        
-        
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
       }else{
         setMessage("Succesfully Undo.");
         refreshData();
@@ -109,6 +122,10 @@ import { Button } from 'react-bootstrap';
   }
   const columns = React.useMemo<ColumnDef<MemberTokenInfo, any>[]>(
     () => [
+      {
+        accessorKey: 'iss_id', 
+        header: () => <span></span>,
+      },
       {
         accessorKey: 'iss_id',      
         cell: info => info.getValue(),       
@@ -194,7 +211,7 @@ import { Button } from 'react-bootstrap';
         <Button variant="primary" onClick={refreshData}>Refresh</Button>{' '}
         <Button variant="primary" onClick={()=>issueMoreToken(row.original.member_id)}>Issue 1 Token</Button>{' '}
         <Button variant="info" onClick={()=>sendEmail(row.original.member_id)}>Send Email to User</Button>{' '}
-        <Button variant="info" onClick={()=>openPDF(row.original.member_id,row.original.member_email)}>Open As PDF</Button>{' '}
+        <Button variant="info" onClick={()=>openPDF(row.original.member_id,row.original.member_email,row.original.mem_uuid)}>Open As PDF</Button>{' '}
       </div>
       { /*
         data.map( t =>{
@@ -259,10 +276,13 @@ const Home = () => {
         cell: info => info.getValue(),
         header: () => <span>Email</span>,
       },      
-      
+      {
+        accessorKey: 'guest_count',
+        header: () => <span>Guest Count #</span>     
+      },
       {
         accessorKey: 'token_count',
-        header: () => <span>Token Count #</span>     
+        header: () => <span>Token Count(Redeem Count)</span>     
       },
       {
         accessorKey: 'member_status_desc',
@@ -271,6 +291,14 @@ const Home = () => {
           filterVariant: 'select',
         },
       },     
+      {
+        accessorKey: 'sent_status',
+        header: () => <span>Email Sent Status</span>     
+      },
+      {
+        accessorKey: 'sent_date',
+        header: () => <span>Sent Date</span>     
+      }
     ],
     []
   )
@@ -285,7 +313,13 @@ const Home = () => {
   },[]);
 
   //const [data, setData] = React.useState<Person[]>(() => makeData(100,5,4))
-  const refreshData = () => setData(_old => []); //stress test
+  const refreshData = () => {
+    getUserData().then((data : JsonResponseUser)=>{      
+      if(data.result){
+        setData(data.result);
+      }            
+    });
+  }
   
   //const [expanded, setExpanded] = React.useState<ExpandedState>({})
 
@@ -443,20 +477,13 @@ const Home = () => {
          ))}
        </select>
      </div>
-     <div>{table.getPrePaginationRowModel().rows.length} Rows</div>
+     <div>{table.getPrePaginationRowModel().rows.length} Rows</div>     
      <div>
-       <button onClick={() => rerender()}>Force Rerender</button>
-     </div>
-     <div>
-       <button onClick={() => refreshData()}>Refresh Data</button>
-     </div>
-     <pre>
-       {JSON.stringify(
-         { columnFilters: table.getState().columnFilters },
-         null,
-         2
-       )}
-     </pre>
+       <button onClick={() => refreshData()} type="button" className="btn btn-primary">Refresh Data</button>       
+     </div>     
+     <div style={{'marginTop': '10px'}}>       
+       <button onClick={() => refreshData()} type="button" className="btn btn-warning">Send Email to ALL Active Members </button>
+     </div>     
    </div>
  );
    };
