@@ -39,7 +39,7 @@ function sendEmail($toEmail,$toName,$userUrl){
 	*/
 
 	 //Server settings
-		$mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+		//$mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
 		$mail->isSMTP();                                            //Send using SMTP
 		$mail->Host       = 'smtp.mail.yahoo.com';                     //Set the SMTP server to send through
 		$mail->SMTPAuth   = true;                                   //Enable SMTP authentication
@@ -55,16 +55,16 @@ function sendEmail($toEmail,$toName,$userUrl){
 		//$mail->addAddress('subhas.sing@gmail.com', 'Joe User');     //Add a recipient
 		$mail->addAddress($toEmail, $toName);     //Add a recipient
 		//$mail->addAddress('ellen@example.com');               //Name is optional
-		$mail->addReplyTo('subhas.sing@gmail.com', 'BCAA');
-		$mail->addCC('subhas.work@gmail.com');
+		//$mail->addReplyTo('subhas.sing@gmail.com', 'BCAA');
+		//$mail->addCC('subhas.work@gmail.com');
 		//$mail->addBCC('bcc@example.com');
 		
 
 		//Content
 		$mail->isHTML(true);                                  //Set email format to HTML
-		$mail->Subject = 'Here is the subject';
-		$mail->Body    = 'This is the HTML message body <b>in bold!</b>';
-		$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+		$mail->Subject = 'QR Code from BCAA';
+		$mail->Body    = "We are migrating, Click here on this URL.<a href='".$userUrl."'>Click Here</a>";
+		$mail->AltBody = "Your email client doesn't support HTML email. Please contact BCAA.";
 
 		$mail->send();
 		//echo 'Message has been sent';

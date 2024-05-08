@@ -7,26 +7,50 @@
 <title>Member Details</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 </head>
-<body>
+<body style="background-color:lightblue">
 <div class="container">
-  
+<nav class="navbar navbar-dark bg-dark fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">BCAA - Member's QRCode Page</a>
+  </div>
+</nav>
+<div style="margin-top: 100px;">
 <?php
     // Include the qrlib file 
     include __DIR__ .'/../phpqrcode/qrlib.php'; 
     require_once(__DIR__ . '/../adm_program/system/common.php');    
     
   
+	$internal = $_POST['internal'];
+    if (empty($internal)) {
+		$internal = $_GET['internal'];
+	}
+	if (empty($internal)) {
+	    $internal = "N";
+	}
+	
     $email = $_POST['email'];
     if (empty($email)) {
 		$email = $_GET['email'];
 	}
 	
     if (empty($email)) {
-        echo "Entered email is empty.<br>";
+        exit( "<div class='alert alert-warning' role='alert'>Entered email is empty.<br></div>");
     }
+	
+	$id = $_POST['id'];
+    if (empty($id)) {
+		$id = $_GET['id'];
+	}
+	
+	if (empty($id) && $internal != "Y" ) {
+        exit( "<div class='alert alert-warning' role='alert'>Invalid URL, please click the link provided from BCAA.</div>");
+    }	
+	//$_SERVER['HTTP_REFERER']
+	
     $queryParams = [$email];
 
-    $sqlMember = 'SELECT ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email
+    $sqlMember = 'SELECT m.`mem_uuid` as mem_uuid, ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email
     FROM adm2_members m 
     LEFT OUTER JOIN `adm2_user_data` ud ON ud.`usd_usr_id` = m.`mem_id` AND ud.`usd_usf_id` = 11 
     LEFT OUTER JOIN `adm2_user_data` ud2 ON ud2.`usd_usr_id` = m.`mem_id` AND ud2.`usd_usf_id` = 24
@@ -37,11 +61,23 @@
     $MYDATA = array();
 
     if ($row = $datesStatement->fetch()) {
+		
         $MYDATA[] =  $row ;
+		$mem_uuid = $row['mem_uuid'];		
         $member_status = $row['member_status'];
+		if(empty($id) && $internal == "Y"){
+			// if empty and coming from  internal user
+			$id = $mem_uuid;
+		}		
+		if($id != $mem_uuid){
+			 //echo "Invalid request, Please contact admin.";
+			 exit( "<div class='alert alert-warning' role='alert'>Invalid request, Please contact admin.".$id." internal ".$internal."</div>");
+		}
+		
+			
         if($member_status == 0){
             // 0 - not set yet , 1 - inative
-            echo "Member is not active for this email.<br> Please contact";
+            exit("<div class='alert alert-warning' role='alert'>Member is not active for this email.<br> Please contact </div>");
         }else{
             // active
 
@@ -110,24 +146,25 @@
 	
                 $fileExt="_m.png";
 				
-				print "<div class='row'><div class='col'>						
+				print "<div class='row align-items-center justify-content-center' style='height: 100vh'>
 						 <div class='card' style='width: 18rem;'>
 						  <img src=./images/$unqId$fileExt class='card-img-top'>	
 						  <div class='card-body'>
 							&nbsp; 
 						  </div>
 						</div>					
-					</div></div>
+					</div>
 				";
             }
         }
 
     }else {
-        echo "Member not found for this email.<br>";
+        exit("<div class='alert alert-warning' role='alert'>Member not found for this email.<br></div>");
     }
 
     
 ?> 
+</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
