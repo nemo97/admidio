@@ -25,8 +25,9 @@ import {
  } from '@tanstack/react-table'
  
  //import { makeData, Person } from './makeData'
- import { MemberInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
+ import { sendUserEmailALL,issueUserTokenALL,MemberInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
 import { Button } from 'react-bootstrap';
+import ReactLoading from 'react-loading';
 
  
  declare module '@tanstack/react-table' {
@@ -303,21 +304,68 @@ const Home = () => {
     []
   )
   const [data, setData] = React.useState<MemberInfo[]>([]);
+  const [message, setMessage] = React.useState<String>('');
+  const [errmsg, setErrmsg] = React.useState<String>('');
+  const [loading, setLoading] = React.useState<boolean>(true);
+
   React.useEffect(()=>{
-    getUserData().then((data : JsonResponseUser)=>{
-      //console.log("data",data);
-      if(data.result){
-        setData(data.result);
-      }            
-    });
+    // getUserData().then((data : JsonResponseUser)=>{
+    //   //console.log("data",data);
+    //   if(data.result){
+    //     setData(data.result);
+    //   }            
+    // });
+    refreshData();
   },[]);
+
+  const sendEmail_ALL = () => {
+    setLoading(true);
+    sendUserEmailALL().then((data : JsonResponseUserToken) => {
+      if(data.error ==='Y'){      
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
+      }else{
+        setMessage("Succesfully sent emails.");
+        refreshData();
+      }
+      setLoading(false);
+    }).catch(e => {
+      setErrmsg("Error "+e);
+      setLoading(false);
+    });
+  }
+  const issueToken_ALL = () => {
+    setLoading(true);
+    issueUserTokenALL().then((data : JsonResponseUserToken) => {
+      if(data.error ==='Y'){      
+        if(data.errorDetails){
+          setMessage('');
+          setErrmsg(data.errorDetails.join(" , "));
+        }          
+      }else{
+        setMessage("Succesfully issued tokens.");
+        refreshData();
+      }
+      setLoading(false);
+    }).catch(e => {
+      setErrmsg("Error "+e);
+      setLoading(false);
+    });
+  }
 
   //const [data, setData] = React.useState<Person[]>(() => makeData(100,5,4))
   const refreshData = () => {
+    setLoading(true);
     getUserData().then((data : JsonResponseUser)=>{      
       if(data.result){
         setData(data.result);
       }            
+      setLoading(false);
+    }).catch(e => {
+      setErrmsg("Error "+e);
+      setLoading(false);
     });
   }
   
@@ -347,6 +395,16 @@ const Home = () => {
 
   return (
    <div className="p-2">
+     { loading && <ReactLoading
+                type="spinningBubbles"
+                color="#0000FF"
+                height={100}
+                width={50}
+            />
+     }
+     {message && <Alert variant='success'>{message}</Alert> } 
+     {errmsg && <Alert variant='warning'>{errmsg}</Alert> } 
+     <div></div>
      <BTable striped bordered hover responsive size="sm">
        <thead>
          {table.getHeaderGroups().map(headerGroup => (
@@ -482,7 +540,10 @@ const Home = () => {
        <button onClick={() => refreshData()} type="button" className="btn btn-primary">Refresh Data</button>       
      </div>     
      <div style={{'marginTop': '10px'}}>       
-       <button onClick={() => refreshData()} type="button" className="btn btn-warning">Send Email to ALL Active Members </button>
+       <button onClick={() => issueToken_ALL()} type="button" className="btn btn-warning">Issue Token ALL Active Members</button>
+     </div>     
+     <div style={{'marginTop': '10px'}}>       
+       <button onClick={() => sendEmail_ALL()} type="button" className="btn btn-danger">Send Emails ALL Active Members</button>
      </div>     
    </div>
  );

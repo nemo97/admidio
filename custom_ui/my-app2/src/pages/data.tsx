@@ -202,3 +202,30 @@ export const issueSingleUserSendEmail  = async (member_id : number) : Promise<Js
     
     return defaultErrorRes;
 }
+
+export const sendUserEmailALL  = async () : Promise<JsonResponseUserToken> => {
+  try {        
+      const data = {'action' : 'send_email_active_members'};
+      const searchResponse: AxiosResponse<JsonResponseUserToken> = await client.post(`/api/members_to_issues.php`,data, config);
+      console.log(searchResponse.data); 
+      return searchResponse.data;  
+    } catch(err) {
+      console.log(err);
+      throw err;
+    } 
+    
+    return defaultErrorRes;
+}
+export const issueUserTokenALL = async () : Promise<JsonResponseUserToken> => {
+  try {        
+      const data = {'action' : 'issue_all_active_members'};
+      const searchResponse: AxiosResponse<JsonResponseUserToken> = await client.post(`/api/members_to_issues.php`,data, config);
+      console.log(searchResponse.data); 
+      return searchResponse.data;  
+    } catch(err) {
+      console.log(err);
+      throw err;
+    } 
+    
+    return defaultErrorRes;
+}
