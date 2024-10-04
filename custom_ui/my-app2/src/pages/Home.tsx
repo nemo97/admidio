@@ -5,7 +5,7 @@ import './home.css'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { Alert, Table as BTable, Card, CardBody, Table } from 'react-bootstrap';
+import { Alert, Table as BTable, Card, CardBody, Table,FloatingLabel,Form } from 'react-bootstrap';
 
 
 import {
@@ -25,7 +25,7 @@ import {
  } from '@tanstack/react-table'
  
  //import { makeData, Person } from './makeData'
- import { sendUserEmailALL,issueUserTokenALL,MemberInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken } from './data';
+ import { sendUserEmailALL,issueUserTokenALL,MemberInfo,EventInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken, JsonResponseEvent, getEventData, updateEvent } from './data';
 import { Button } from 'react-bootstrap';
 import ReactLoading from 'react-loading';
 
@@ -38,12 +38,101 @@ import ReactLoading from 'react-loading';
  }
 
 
+ const EventComponent = ({updateParentCurrentEvent}:{updateParentCurrentEvent : any}) => {
+
+  const [message, setMessage] = React.useState<String>('');
+  const [errmsg, setErrmsg] = React.useState<String>('');
+  const [data, setData] = React.useState<EventInfo[]>([]);
+  const [currentActiveEvent, setCurrentActiveEvent] = React.useState<number>(0);
+
+  React.useEffect(()=>{
+    refreshData();
+  },[]);
+
+  React.useEffect(()=>{
+    const cEvent: EventInfo = data.filter(e => e.status==="Y")[0];
+    if(cEvent){
+      setCurrentActiveEvent(cEvent.event_id);
+      updateParentCurrentEvent(cEvent.event_id);
+    }else{
+      setCurrentActiveEvent(-1);
+      updateParentCurrentEvent(-1);
+    }
+  },[data]);
+  
+  const refreshData = () => {
+    getEventData().then((data : JsonResponseEvent)=>{
+      //console.log("data",data);
+      if(data.result){
+        setData(data.result);        
+      }
+      
+    });
+  }
+
+  const selectOption = data.map(e => 
+    <option value={e.event_id}>{e.event_id + " - "+e.description}</option>
+  );
+
+  const handleChange = (e: React.ChangeEvent<{value : string}>) => {
+    //const newValue = e.target.value;
+    setCurrentActiveEvent(Number(e.target.value));
+  }
+
+  const handleUpdateEvent = () => {
+    let check = window.confirm("Reaaly want to change current event?");
+    if(check){
+      updateEvent(currentActiveEvent).then((data : JsonResponseUserToken) => {
+        if(data.error==='Y'){        
+          if(data.errorDetails){
+            setMessage('');
+            setErrmsg(data.errorDetails.join(" , "));
+          }  
+          // revert
+          setCurrentActiveEvent(-1);
+          updateParentCurrentEvent(-1);        
+        }else{
+          setMessage("Succesfully changed event.");
+          //setCurrentActiveEvent(-1);
+          updateParentCurrentEvent(currentActiveEvent);   
+          //refreshData();
+        }
+      });
+    }
+  }
+
+  return (
+    
+    <div className="container">   
+      {message && <Alert variant='success'>{message}</Alert> } 
+      {errmsg && <Alert variant='warning'>{errmsg}</Alert> } 
+      <div></div>
+      <div>        
+      <Card>
+      <Card.Body>
+        <FloatingLabel controlId="floatingSelect"  label="Current Event">
+          <Form.Select value={currentActiveEvent} onChange={handleChange} aria-label="Current Event">
+            {
+             selectOption
+            }            
+          </Form.Select>
+          <Button variant="danger" onClick={()=>handleUpdateEvent()}>Update</Button>
+        </FloatingLabel>
+        </Card.Body>
+        </Card>
+      </div>
+      </div>
+  );
+    
+  
+ }
 
  const TokenComponent = ({ row }: { row: Row<MemberInfo> }) => {
 
   const [data, setData] = React.useState<MemberTokenInfo[]>([]);
   const [message, setMessage] = React.useState<String>('');
   const [errmsg, setErrmsg] = React.useState<String>('');
+  
 
   React.useEffect(()=>{
     refreshData();
@@ -124,7 +213,7 @@ import ReactLoading from 'react-loading';
   const columns = React.useMemo<ColumnDef<MemberTokenInfo, any>[]>(
     () => [
       {
-        accessorKey: 'iss_id', 
+        accessorKey: 'iss_id1', 
         header: () => <span></span>,
       },
       {
@@ -232,11 +321,14 @@ import ReactLoading from 'react-loading';
 const Home = () => {
 
    const rerender = React.useReducer(() => ({}), {})[1]
+   const [currentActiveEventId, setCurrentActiveEventId] = React.useState<number>(0);
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-
+  const updateParentCurrentEvent = ( v : number) => {
+      setCurrentActiveEventId(v);
+  }
   const columns = React.useMemo<ColumnDef<MemberInfo, any>[]>(
     () => [
       {
@@ -405,6 +497,8 @@ const Home = () => {
      {message && <Alert variant='success'>{message}</Alert> } 
      {errmsg && <Alert variant='warning'>{errmsg}</Alert> } 
      <div></div>
+     <EventComponent updateParentCurrentEvent={updateParentCurrentEvent}></EventComponent>
+     <div></div>
      <BTable striped bordered hover responsive size="sm">
        <thead>
          {table.getHeaderGroups().map(headerGroup => (
@@ -537,7 +631,7 @@ const Home = () => {
      </div>
      <div>{table.getPrePaginationRowModel().rows.length} Rows</div>     
      <div>
-       <button onClick={() => refreshData()} type="button" className="btn btn-primary">Refresh Data</button>       
+       <button onClick={() => refreshData()} type="button" className="btn btn-primary">Refresh Data | {currentActiveEventId}</button>       
      </div>     
      <div style={{'marginTop': '10px'}}>       
        <button onClick={() => issueToken_ALL()} type="button" className="btn btn-warning">Issue Token ALL Active Members</button>

@@ -2,6 +2,7 @@ import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 
 const client = axios.create({
   baseURL: 'https://bcaa.subhas.dev/',
+  
 });
 const defaultErrorRes : JsonResponseUserToken = {
     'error':'Y',
@@ -33,6 +34,12 @@ export type MemberTokenInfo = {
     token_status_desc: string ,
     token_redeem_date: string,    
 }
+export type EventInfo = {
+  event_id: number,
+  status : string, 
+  description: string,
+     
+}
 type JsonResponseBase = {
     error?: string,
     errorDetails?: string[],
@@ -43,6 +50,9 @@ export type JsonResponseUser  = JsonResponseBase & {
 }
 export type JsonResponseUserToken  = JsonResponseBase & {    
     result? : MemberTokenInfo[]
+}
+export type JsonResponseEvent  = JsonResponseBase & {    
+  result? : EventInfo[]
 }
 export const getUserData  = async () : Promise<JsonResponseUser> => {
     try {
@@ -69,6 +79,42 @@ export const getUserData  = async () : Promise<JsonResponseUser> => {
         'error':'Y'
       };
       return r;
+}
+
+export const getEventData  = async () : Promise<JsonResponseEvent> => {
+  const r : JsonResponseEvent = {
+    'error':'Y'
+  };
+  try {
+      const queryString: string = `action=GET_EVENTS`;
+      const searchResponse: AxiosResponse<JsonResponseEvent> = await client.get(`/api/members_to_issues.php?${queryString}`, config);
+      console.log(searchResponse.data);
+      //if(searchResponse.data && searchResponse.data["error"] !== "Y" ){
+          // success
+          //const result : MemberInfo[] = searchResponse.result;
+
+          return searchResponse.data; 
+      //}
+      //const foundUsers: MemberInfo[] = searchResponse.data.js;
+  
+      // const username: string = foundUsers[0].login;
+      // const userResponse: AxiosResponse = await client.get(`/users/${username}`, config);
+      // const user: githubUser = userResponse.data;
+      // const followersCount = user.followers;
+  
+      //console.log(`The most followed user on GitHub is "${username}" with ${followersCount} followers.`)
+    } catch(e : unknown) {
+      let m : string = '';
+      if (typeof e === "string") {
+        m = e.toUpperCase() // works, `e` narrowed to string
+    } else if (e instanceof Error) {
+        m = e.message // works, `e` narrowed to Error
+    }
+      //console.log(err);
+      r.errorDetails = [m];
+    } 
+   
+    return r;
 }
 
 export const getUserTokenData  = async (member_id : number) : Promise<JsonResponseUserToken> => {
@@ -149,6 +195,39 @@ export const undoUserToken  = async (member_id : number, iss_id : number) : Prom
       return defaultErrorRes;
 }
 
+export const updateEvent  = async (event_id : number) : Promise<JsonResponseUserToken> => {
+  let r = defaultErrorRes;
+  try {        
+      const data = {'event_id': event_id, 'action' : 'SET_EVENT'};
+      const searchResponse: AxiosResponse<JsonResponseUserToken> = await client.post(`/api/members_to_issues.php`,data, config);
+      console.log(searchResponse.data);
+      //if(searchResponse.data && searchResponse.data["error"] !== "Y" ){
+          // success
+          //const result : MemberInfo[] = searchResponse.result;
+
+      return searchResponse.data; 
+      //}
+      //const foundUsers: MemberInfo[] = searchResponse.data.js;
+  
+      // const username: string = foundUsers[0].login;
+      // const userResponse: AxiosResponse = await client.get(`/users/${username}`, config);
+      // const user: githubUser = userResponse.data;
+      // const followersCount = user.followers;
+  
+      //console.log(`The most followed user on GitHub is "${username}" with ${followersCount} followers.`)
+    } catch(e : unknown) {
+      let m : string = '';
+      if (typeof e === "string") {
+        m = e.toUpperCase() // works, `e` narrowed to string
+    } else if (e instanceof Error) {
+        m = e.message // works, `e` narrowed to Error
+    }
+      console.log(e);
+      r.errorDetails = [m];
+    } 
+   
+    return r;
+}
 
 export const issueSingleUserToken  = async (member_id : number) : Promise<JsonResponseUserToken> => {
     try {        
