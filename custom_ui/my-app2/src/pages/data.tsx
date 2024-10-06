@@ -7,7 +7,7 @@ const client = axios.create({
 const defaultErrorRes : JsonResponseUserToken = {
     'error':'Y',
     errorDetails: ['Something went wrong!']
-  };
+};
 const config: AxiosRequestConfig = {
     headers: {
       'Accept': 'application/json',
@@ -30,8 +30,12 @@ export type MemberTokenInfo = {
     iss_id: number,
     member_id : number, 
     token_text: number,
-    token_status: string ,
-    token_status_desc: string ,
+    status: string ,
+    event_id: number,
+    event_desc: string,
+    redeem_id : string,
+    sent_status: string,
+    sent_date: string,
     token_redeem_date: string,    
 }
 export type EventInfo = {
@@ -169,9 +173,9 @@ export const deleteUserToken  = async (member_id : number, iss_id : number) : Pr
       return defaultErrorRes;
 }
 
-export const undoUserToken  = async (member_id : number, iss_id : number) : Promise<JsonResponseUserToken> => {
+export const undoUserToken  = async (member_id : number, redeem_id : string) : Promise<JsonResponseUserToken> => {
     try {        
-        const data = {'member_id': member_id,'iss_id' : iss_id , 'action' : 'UNDO_TOKEN'};
+        const data = {'member_id': member_id,'redeem_id' : redeem_id , 'action' : 'UNDO_TOKEN'};
         const searchResponse: AxiosResponse<JsonResponseUserToken> = await client.post(`/api/members_to_issues.php`,data, config);
         console.log(searchResponse.data);
         //if(searchResponse.data && searchResponse.data["error"] !== "Y" ){
@@ -219,13 +223,12 @@ export const updateEvent  = async (event_id : number) : Promise<JsonResponseUser
       let m : string = '';
       if (typeof e === "string") {
         m = e.toUpperCase() // works, `e` narrowed to string
-    } else if (e instanceof Error) {
+      } else if (e instanceof Error) {
         m = e.message // works, `e` narrowed to Error
-    }
+      }
       console.log(e);
       r.errorDetails = [m];
     } 
-   
     return r;
 }
 
