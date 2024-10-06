@@ -21,7 +21,8 @@ import {
    useReactTable,
    ExpandedState,
    getExpandedRowModel,
-   Row
+   Row,
+   SortingState
  } from '@tanstack/react-table'
  
  //import { makeData, Person } from './makeData'
@@ -132,7 +133,7 @@ import ReactLoading from 'react-loading';
   const [data, setData] = React.useState<MemberTokenInfo[]>([]);
   const [message, setMessage] = React.useState<String>('');
   const [errmsg, setErrmsg] = React.useState<String>('');
-  
+  const [sorting, setSorting] = React.useState<SortingState>([]);
 
   React.useEffect(()=>{
     refreshData();
@@ -185,37 +186,40 @@ import ReactLoading from 'react-loading';
     window.open("https://bcaa.subhas.dev/custom_pages/members_details.php?email="+member_email+"&id="+mem_uuid+"","_balnk");
   }
   const deleteToken = (member_id : number,iss_id: number) => {
-    deleteUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
-      if(data.error==='Y'){        
-        if(data.errorDetails){
-          setMessage('');
-          setErrmsg(data.errorDetails.join(" , "));
-        }          
-      }else{
-        setMessage("Succesfully Deleted.");
-        refreshData();
-      }
-    });
+    let check = window.confirm("Really, want to delete? Deleting this invalidate sent qrcode.");
+    if(check){
+      deleteUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
+        if(data.error==='Y'){        
+          if(data.errorDetails){
+            setMessage('');
+            setErrmsg(data.errorDetails.join(" , "));
+          }          
+        }else{
+          setMessage("Succesfully Deleted.");
+          refreshData();
+        }
+      });
+   }
   }
-  const undoToken = (member_id : number,iss_id: number) => {
-    undoUserToken(member_id,iss_id).then((data : JsonResponseUserToken) => {
-      if(data.error==='Y'){        
-        if(data.errorDetails){
-          setMessage('');
-          setErrmsg(data.errorDetails.join(" , "));
-        }          
-      }else{
-        setMessage("Succesfully Undo.");
-        refreshData();
-      }
-    });
+  const undoToken = (member_id : number,redeem_id: string) => {
+    let check = window.confirm("Really, want to undo?");
+    if(check){
+      undoUserToken(member_id,redeem_id).then((data : JsonResponseUserToken) => {
+        if(data.error==='Y'){        
+          if(data.errorDetails){
+            setMessage('');
+            setErrmsg(data.errorDetails.join(" , "));
+          }          
+        }else{
+          setMessage("Succesfully Undo.");
+          refreshData();
+        }
+      });
+   }
   }
   const columns = React.useMemo<ColumnDef<MemberTokenInfo, any>[]>(
     () => [
-      {
-        accessorKey: 'iss_id1', 
-        header: () => <span></span>,
-      },
+     
       {
         accessorKey: 'iss_id',      
         cell: info => info.getValue(),       
@@ -226,24 +230,42 @@ import ReactLoading from 'react-loading';
         cell: info => info.getValue(),
         header: () => <span>Token</span>,
       }, 
+      {        
+        accessorKey: 'sent_status',
+        cell: info => info.getValue(),
+        header: () => <span>Email Sent?</span>,
+      }, {        
+        accessorKey: 'sent_date',
+        cell: info => info.getValue(),
+        header: () => <span>Email Date</span>,
+      }, 
       {
-        accessorKey: 'token_status',
-        header: () => <span>Token Status #</span>     
+        accessorKey: 'status',
+        header: () => <span>Redeem Status</span>     
       },
       {
-        accessorKey: 'token_status_desc',
-        header: 'Status Desc',        
+        accessorKey: 'event_id',
+        header: () => <span>Event Id</span>,        
       },  
       {
         accessorKey: 'token_redeem_date',
-        header: 'Redeem Date',        
+        header: () => <span>Redeem Date</span>,        
       },     
     ],
     []
   );
-  const table = useReactTable({data,
+  const table = useReactTable({
+    data,
     columns,
-    getCoreRowModel: getCoreRowModel()});
+    state: {
+      sorting,
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+   }
+  );
 
    return (
     <div className="container">   
@@ -254,16 +276,38 @@ import ReactLoading from 'react-loading';
        <thead>
          {table.getHeaderGroups().map(headerGroup => (
            <tr key={headerGroup.id}>
+             <th>&nbsp;</th> 
              {headerGroup.headers.map(header => {
                return (
                  <th key={header.id} colSpan={header.colSpan}>
                    {header.isPlaceholder ? null : (
                      <>
-                       <div>
+                       <div
+                         {...{
+                          className: header.column.getCanSort()
+                            ? 'cursor-pointer select-none'
+                            : '',
+                          onClick: header.column.getToggleSortingHandler(),
+                        }
+                       }
+                       title={
+                         header.column.getCanSort()
+                           ? header.column.getNextSortingOrder() === 'asc'
+                             ? 'Sort ascending'
+                             : header.column.getNextSortingOrder() === 'desc'
+                               ? 'Sort descending'
+                               : 'Clear sort'
+                           : undefined
+                       }
+                       >
                          {flexRender(
                            header.column.columnDef.header,
                            header.getContext()
-                         )}                         
+                         )}
+                         {{
+                           asc: ' 🔼',
+                           desc: ' 🔽',
+                          }[header.column.getIsSorted() as string] ?? null}                         
                        </div>                       
                      </>
                    )}
@@ -279,8 +323,9 @@ import ReactLoading from 'react-loading';
             <React.Fragment key={row.id}>
              <tr>
               <td>
-              {row.original.token_status === 'R' &&  <Button variant="danger" onClick={()=> undoToken(row.original.member_id,row.original.iss_id) }>Undo Redeem</Button>} {' '} 
-              <Button variant="warning" onClick={()=> deleteToken(row.original.member_id,row.original.iss_id) }>Remove</Button></td>
+                {row.original.status === 'R' &&  <Button variant="danger" onClick={()=> undoToken(row.original.member_id,row.original.redeem_id) }>Undo Redeem</Button>} {' '} 
+                <Button variant="warning" onClick={()=> deleteToken(row.original.member_id,row.original.iss_id) }>Remove</Button>
+              </td>
                {row.getVisibleCells().map(cell => {
                  return (
                    <td key={cell.id}>
@@ -399,7 +444,8 @@ const Home = () => {
   const [message, setMessage] = React.useState<String>('');
   const [errmsg, setErrmsg] = React.useState<String>('');
   const [loading, setLoading] = React.useState<boolean>(true);
-
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  
   React.useEffect(()=>{
     // getUserData().then((data : JsonResponseUser)=>{
     //   //console.log("data",data);
@@ -469,6 +515,7 @@ const Home = () => {
     filterFns: {},
     state: {
       columnFilters,
+      sorting,
       //expanded
     },
     getRowCanExpand : ()=> { return true},
@@ -480,6 +527,8 @@ const Home = () => {
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     //getExpandedRowModel: getExpandedRowModel(),
+    onSortingChange: setSorting,
+    
     debugTable: true,
     debugHeaders: true,
     debugColumns: false,
@@ -514,7 +563,17 @@ const Home = () => {
                              ? 'cursor-pointer select-none'
                              : '',
                            onClick: header.column.getToggleSortingHandler(),
-                         }}
+                         }
+                        }
+                        title={
+                          header.column.getCanSort()
+                            ? header.column.getNextSortingOrder() === 'asc'
+                              ? 'Sort ascending'
+                              : header.column.getNextSortingOrder() === 'desc'
+                                ? 'Sort descending'
+                                : 'Clear sort'
+                            : undefined
+                        }                        
                        >
                          {flexRender(
                            header.column.columnDef.header,
