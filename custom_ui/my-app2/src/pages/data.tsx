@@ -44,13 +44,19 @@ export type EventInfo = {
   description: string,
      
 }
+export type SummeryInfo = {
+  guest_count: number,
+  total_redeem_count : number,
+  total_checkin_count : number,  
+}
 type JsonResponseBase = {
     error?: string,
     errorDetails?: string[],
     action?: string    
 }
 export type JsonResponseUser  = JsonResponseBase & {    
-    result? : MemberInfo[]
+    result? : MemberInfo[],
+    summery? : SummeryInfo[]
 }
 export type JsonResponseUserToken  = JsonResponseBase & {    
     result? : MemberTokenInfo[]

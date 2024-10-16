@@ -26,7 +26,7 @@ import {
  } from '@tanstack/react-table'
  
  //import { makeData, Person } from './makeData'
- import { sendUserEmailALL,issueUserTokenALL,MemberInfo,EventInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken, JsonResponseEvent, getEventData, updateEvent } from './data';
+ import { sendUserEmailALL,issueUserTokenALL,MemberInfo,EventInfo,getUserData,getUserTokenData,issueSingleUserSendEmail,MemberTokenInfo,JsonResponseUser,JsonResponseUserToken, issueSingleUserToken, undoUserToken, deleteUserToken, JsonResponseEvent, getEventData, updateEvent, SummeryInfo } from './data';
 import { Button } from 'react-bootstrap';
 import ReactLoading from 'react-loading';
 
@@ -441,6 +441,7 @@ const Home = () => {
     []
   )
   const [data, setData] = React.useState<MemberInfo[]>([]);
+  const [summery, setSummery] = React.useState<SummeryInfo>();
   const [message, setMessage] = React.useState<String>('');
   const [errmsg, setErrmsg] = React.useState<String>('');
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -499,7 +500,10 @@ const Home = () => {
     getUserData().then((data : JsonResponseUser)=>{      
       if(data.result){
         setData(data.result);
-      }            
+      }    
+      if(data.summery){
+        setSummery(data.summery[0]);
+      }        
       setLoading(false);
     }).catch(e => {
       setErrmsg("Error "+e);
@@ -548,6 +552,27 @@ const Home = () => {
      <div></div>
      <EventComponent updateParentCurrentEvent={updateParentCurrentEvent}></EventComponent>
      <div></div>
+     <div style={{"margin":"10px"}}>
+        {summery && 
+            <div>
+                <div>
+                  <span>Total Guest (RSVP) :  </span>
+                  <span>{summery.guest_count}</span>
+                </div>
+                <div>
+                  <span>Total Checkin :  </span>
+                  <span>{summery.total_checkin_count}</span>
+                </div>
+                <div>
+                  <span>Total Redeemed :  </span>
+                  <span>{summery.total_redeem_count}</span>
+                </div>
+            </div>
+        }
+     </div>
+     <div style={{"margin":"10px"}}>
+       <button  onClick={() => refreshData()} type="button" className="btn btn-primary">Refresh Data | {currentActiveEventId}</button>       
+     </div>   
      <BTable striped bordered hover responsive size="sm">
        <thead>
          {table.getHeaderGroups().map(headerGroup => (
