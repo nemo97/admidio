@@ -81,7 +81,7 @@
         }else{
             // active
 
-            $sql = 'SELECT m.`mem_id` AS member_id ,ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email,CONCAT(ud4.usd_value,\' \',ud3.usd_value) AS member_name, b.`iss_token` AS iss_token,`status`,`redeem_date`,`redeem_user`
+            $sql = 'SELECT m.`mem_id` AS member_id ,ud2.`usd_value` AS member_status,ud.`usd_value` AS member_email,CONCAT(ud4.usd_value,\' \',ud3.usd_value) AS member_name, b.`iss_token` AS iss_token
             FROM adm2_members m LEFT OUTER JOIN bcaa_issues b ON m.`mem_id` = b.`member_id` 
             LEFT OUTER JOIN `adm2_user_data` ud ON ud.`usd_usr_id` = m.`mem_id` AND ud.`usd_usf_id` = 11 
             LEFT OUTER JOIN `adm2_user_data` ud2 ON ud2.`usd_usr_id` = m.`mem_id` AND ud2.`usd_usf_id` = 24
@@ -96,8 +96,7 @@
                 $iss_token = $row1['iss_token'];
                 $member_id = $row1['member_id'];
 				$member_name = $row1['member_name'];
-				$redeem_date = $row1['redeem_date'];
-				$status = $row1['status'];
+				
 				
                 //echo  "<div class='row'><div class='col'> Email ".$email;   
                 // QRcode::png($text);
@@ -138,9 +137,9 @@
 				// Insert text to the image
 				imagestring($newImage, 5, $x, $y, $text, $color);
 				imagestring($newImage, 5, $x, $height - 50, $iss_token, $color);
-				if (!empty($redeem_date)) {
-					imagestring($newImage, 5, $x, $y+30, $redeem_date, $colorRed);
-				}
+				//if (!empty($redeem_date)) {
+				//	imagestring($newImage, 5, $x, $y+30, $redeem_date, $colorRed);
+				//}
 				
 				imagepng($newImage, $modifiedFile);
 	
